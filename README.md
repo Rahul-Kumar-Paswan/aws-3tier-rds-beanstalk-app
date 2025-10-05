@@ -329,7 +329,6 @@ REACT_APP_API_URL=http://myapp-backend-env.eba-xxxx.ap-south-1.elasticbeanstalk.
 
 ## 📸 Screenshots / Demo
 
-(Include images or screenshots here showing login, UI, AWS console, etc.)
 ![alt text](./screenshots/image.png)
 
 ---
