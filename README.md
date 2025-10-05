@@ -79,14 +79,11 @@ This setup serves as a production-ready baseline for any cloud-hosted React + No
 
 ## 📁 Architecture Diagram
 
-```plaintext
-User
- ↓ HTTP (80)
-[Elastic Beanstalk - Frontend (Docker + NGINX + React)]
- ↓ HTTP (8080)
-[Elastic Beanstalk - Backend (Node.js / Express)]
- ↓ MySQL (3306)
-[Amazon RDS - MySQL]
+```mermaid
+graph TD
+    User -->|HTTP:80| Frontend[Elastic Beanstalk - React + NGINX + Docker]
+    Frontend -->|HTTP:8080| Backend[Elastic Beanstalk - Node.js / Express]
+    Backend -->|MySQL:3306| Database[Amazon RDS - MySQL]
 ```
 ![alt text](./screenshots/image.png)
 ---
@@ -131,7 +128,7 @@ your-project-root/
   - Docker  
 
 
-### Installation Steps (Local & Prep)
+## Installation Steps (Local & Prep)
 
 1. Clone the repository:
    ```bash
@@ -139,7 +136,7 @@ your-project-root/
    cd your-repo
    ```
 
-## 🧪 Local Development
+### 🧪 Local Development
 ### Backend
 ```bash
 cd api
@@ -297,17 +294,15 @@ Set the following environment variables in **Elastic Beanstalk**, either via:
 - `.ebextensions/` (e.g., `node.config`), or  
 - **EB Console** → **Configuration** → **Software** → **Environment Properties**
 
-```env
-| Key               | Value                                         |
-|-----              |-------|
-| DB_HOST           | myappdb.dfghj75b.ap-south-1.rds.amazonaws.com |
-| DB_NAME           | crud_app                                      |
-| DB_USER           | admin                                         |
-| DB_PASSWORD       | <your-secure-password>                        |
-| JWT_SECRET        | <yourSecret>                                |
-| NODE_ENV          | production                                    |
-| REACT_APP_API_URL | Backend EB URL                                |
-```
+| Key         | Example Value                                     | Description                  |
+|-------------|---------------------------------------------------|------------------------------|
+| DB_HOST     | myappdb.dfghj75b.ap-south-1.rds.amazonaws.com     | RDS endpoint                 |
+| DB_NAME     | crud_app                                          | Database name                |
+| DB_USER     | admin                                             | DB username                  |
+| DB_PASSWORD | <your-secure-password>                            | DB password                  |
+| JWT_SECRET  | <yourSecret>                                      | Secret for JWT signing       |
+| NODE_ENV    | production                                        | Environment mode             |
+
 ### 🌍 Frontend (React via Docker)
 
 Set the following environment variable in the **Elastic Beanstalk** environment properties for the **frontend**:
