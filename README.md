@@ -86,6 +86,7 @@ graph TD
     Backend -->|MySQL:3306| Database[Amazon RDS - MySQL]
 ```
 ![alt text](./screenshots/image.png)
+
 ---
 
 ## 📁 Project Structure
@@ -127,6 +128,7 @@ your-project-root/
   - npm  
   - Docker  
 
+---
 
 ## Installation Steps (Local & Prep)
 
@@ -149,7 +151,7 @@ DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=<your-secure-password>
 DB_NAME=crud_app
-JWT_SECRET=yourSecret
+JWT_SECRET=<yourSecret>
 NODE_ENV=development
 ```
 ### Frontend
@@ -173,8 +175,6 @@ REACT_APP_API_URL=http://localhost:8080
 - Deploy RDS in private subnet
 - Deploy Elastic Beanstalk environments in public subnets
 
----
-
 ### 🔐 Security Groups Setup
 
 | Security Group   | Inbound                          | Outbound                          | Notes                              |
@@ -182,8 +182,6 @@ REACT_APP_API_URL=http://localhost:8080
 | `sg-frontend-eb` | TCP 80 (from `0.0.0.0/0`)        | TCP 8080 → `sg-backend-eb`        | Public access for frontend         |
 | `sg-backend-eb`  | TCP 8080 (from `sg-frontend-eb`) | TCP 3306 → `sg-rds`               | Internal API access only           |
 | `sg-rds`         | TCP 3306 (from `sg-backend-eb`)  | Allow All (or restrict as needed) | Private DB, only accessible by API |
-
----
 
 ### 🛢️ Step 1: MySQL Database (RDS)
 
@@ -202,8 +200,6 @@ REACT_APP_API_URL=http://localhost:8080
 📌 **Note your DB endpoint:**  
 `myappdb.abcdefgh.ap-south-1.rds.amazonaws.com`
 
----
-
 ### 🧾 Step 2: IAM Roles
 
 #### Elastic Beanstalk Service Role
@@ -220,9 +216,7 @@ REACT_APP_API_URL=http://localhost:8080
 
 > Attach these roles while creating Elastic Beanstalk environments.
 
----
-
-## 🖥️ Step 3: Deploy Backend to Elastic Beanstalk
+### 🖥️ Step 3: Deploy Backend to Elastic Beanstalk
 
 1. **Zip the backend** (excluding `node_modules`, `.git`):
 ```bash
@@ -245,7 +239,7 @@ zip -r ../backend.zip . -x "node_modules/*" ".git/*"
 
 4. **Enable Rolling Deployments**
 
-## 🌐 Step 4: Deploy Frontend to Elastic Beanstalk (Docker)
+### 🌐 Step 4: Deploy Frontend to Elastic Beanstalk (Docker)
 1. **Zip the Frontend**
 
 ```bash
@@ -262,6 +256,7 @@ zip -r ../frontend.zip Dockerfile default.conf env.sh build public src package*.
 - **Environment Variable:**  
   ➡️ Set required frontend environment variables (see [🔧 Frontend Environment Variables](#-frontend-react-via-docker))
 
+---
 
 ## 📦 Deployment Bundles
 
@@ -273,8 +268,6 @@ zip -r ../frontend.zip Dockerfile default.conf env.sh build public src package*.
 - `Procfile`
 - `.ebextensions/` (optional for environment variable injection)
 
----
-
 ### 📁 `frontend.zip` contains:
 - `Dockerfile`
 - `env.sh`
@@ -285,6 +278,7 @@ zip -r ../frontend.zip Dockerfile default.conf env.sh build public src package*.
 - `package.json`
 - `package-lock.json`
 
+---
 
 ## 🔧 Environment Variables
 ### 🔐 Backend (Node.js)
@@ -299,8 +293,8 @@ Set the following environment variables in **Elastic Beanstalk**, either via:
 | DB_HOST     | myappdb.dfghj75b.ap-south-1.rds.amazonaws.com     | RDS endpoint                 |
 | DB_NAME     | crud_app                                          | Database name                |
 | DB_USER     | admin                                             | DB username                  |
-| DB_PASSWORD | <your-secure-password>                            | DB password                  |
-| JWT_SECRET  | <yourSecret>                                      | Secret for JWT signing       |
+| DB_PASSWORD | `<your-secure-password>`                          | DB password                  |
+| JWT_SECRET  | `<yourSecret>`                                    | Secret for JWT signing       |
 | NODE_ENV    | production                                        | Environment mode             |
 
 ### 🌍 Frontend (React via Docker)
@@ -310,6 +304,7 @@ Set the following environment variable in the **Elastic Beanstalk** environment 
 ```env
 REACT_APP_API_URL=http://myapp-backend-env.eba-xxxx.ap-south-1.elasticbeanstalk.com
 ```
+---
 
 ## ✅ Final Checks
 | Component | Status Check                                   |
@@ -321,6 +316,8 @@ REACT_APP_API_URL=http://myapp-backend-env.eba-xxxx.ap-south-1.elasticbeanstalk.
 | Logs      | Check EB Logs for errors                       |
 | Scaling   | Optional: enable autoscaling via EB            |
 
+---
+
 ## 📎 Tips & Best Practices
 
 - [ ] ✅ Use `curl` on EC2 to verify RDS connectivity
@@ -328,12 +325,14 @@ REACT_APP_API_URL=http://myapp-backend-env.eba-xxxx.ap-south-1.elasticbeanstalk.
 - [ ] 🔁 Use rolling deployments to avoid downtime
 - [ ] 🔐 Store sensitive credentials in AWS Secrets Manager
 
+---
 
 ## 📸 Screenshots / Demo
 
 (Include images or screenshots here showing login, UI, AWS console, etc.)
 ![alt text](./screenshots/image.png)
 
+---
 
 ## 🧰 Testing & Verification
 
@@ -352,7 +351,6 @@ curl -X GET "http://<backend-env>.elasticbeanstalk.com/api/users" \
 - Typical log files:
   - `/var/log/web.stdout.log`
   - `/var/log/nginx/error.log`
-
 
 ---
 ## 🛠 Troubleshooting / Common Issues & Resolutions
@@ -374,6 +372,7 @@ curl -X GET "http://<backend-env>.elasticbeanstalk.com/api/users" \
 - Optionally integrate CI/CD (GitHub Actions, Jenkins) to automate deployment  
 - *(Advanced)* Later you can migrate this to Infrastructure as Code (Terraform / CloudFormation)  
 
+---
 
 ## 🧠 Learning & Takeaways
 
@@ -381,6 +380,7 @@ curl -X GET "http://<backend-env>.elasticbeanstalk.com/api/users" \
 - You’ve learnt how Elastic Beanstalk, RDS, VPC, Security Groups, environment variables, and Docker all tie together  
 - This setup is modular — you can replace frontend or backend technologies independently  
 
+---
 
 ## 📝 License
 
