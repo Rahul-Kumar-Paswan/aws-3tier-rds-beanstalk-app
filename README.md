@@ -79,12 +79,6 @@ This setup serves as a production-ready baseline for any cloud-hosted React + No
 
 ## 📁 Architecture Diagram
 
-```mermaid
-graph TD
-    User -->|HTTP:80| Frontend[Elastic Beanstalk - React + NGINX + Docker]
-    Frontend -->|HTTP:8080| Backend[Elastic Beanstalk - Node.js / Express]
-    Backend -->|MySQL:3306| Database[Amazon RDS - MySQL]
-```
 ![alt text](./screenshots/architecture-diagram.png)
 
 ---
