@@ -85,7 +85,7 @@ graph TD
     Frontend -->|HTTP:8080| Backend[Elastic Beanstalk - Node.js / Express]
     Backend -->|MySQL:3306| Database[Amazon RDS - MySQL]
 ```
-![alt text](./screenshots/image.png)
+![alt text](./screenshots/architecture-diagram.png)
 
 ---
 
