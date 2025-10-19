@@ -381,7 +381,7 @@ Required Environment Variable (set in EB frontend environment):
 
 ## 📸 Screenshots / Demo
 
-![alt text](./screenshots/image.png)
+![alt text](./screenshots/image1.png)
 
 ---
 
