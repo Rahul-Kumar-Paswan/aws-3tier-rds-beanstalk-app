@@ -96,10 +96,10 @@ your-project-root/
 │   ├── middleware/
 │   ├── routes/
 │   ├── models/
-│   └── .ebextensions/       # (Optional) EB configuration for environment vars
+│   └── .ebextensions/      # (Optional) EB configuration for environment vars
 ├── client/                 # Frontend (React) code
 │   ├── Dockerfile
-│   ├── default.conf        # NGINX config
+│   ├── default.conf        # NGINX configuration for serving React build from `/usr/share/nginx/html` and proxying API calls.
 │   ├── env.sh              # Script to inject runtime env var
 │   ├── package.json
 │   ├── package-lock.json
@@ -180,10 +180,11 @@ REACT_APP_API_URL=http://localhost:8080
 ### 🛢️ Step 1: MySQL Database (RDS)
 
 - **Service:** RDS → Create Database  
+- **DB Instance Name:** Instance Name (DB-Instance-1)  
 - **Engine:** MySQL  
 - **Instance Class:** db.t3.micro  
 - **DB Name:** crud_app  
-- **Username:** admin  
+- **Username:** rahul  
 - **Password:** `<secure>`  
 - **VPC:** Default VPC  
 - **Subnet:** Private subnet  
@@ -193,6 +194,30 @@ REACT_APP_API_URL=http://localhost:8080
 
 📌 **Note your DB endpoint:**  
 `myappdb.abcdefgh.ap-south-1.rds.amazonaws.com`
+
+### MySQL Setup Validation & Access
+
+- Confirm MySQL instance status is **Available** in AWS RDS console  
+- Connect from backend EC2 or Elastic Beanstalk instances to test connectivity:
+
+```bash
+mysql -h <db-endpoint> -u admin -p
+CREATE DATABASE IF NOT EXISTS crud_app;
+USE crud_app;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(100) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  role VARCHAR(20) DEFAULT 'user',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE USER 'rahul'@'%' IDENTIFIED BY 'securepassword123!';
+GRANT ALL ON crud_app.* TO 'rahul'@'%';
+FLUSH PRIVILEGES;
+```
 
 ### 🧾 Step 2: IAM Roles
 
@@ -207,6 +232,10 @@ REACT_APP_API_URL=http://localhost:8080
 
 - **Name:** `aws-elasticbeanstalk-ec2-role`  
 - **Policy:** `AmazonRDSFullAccess`
+- **Policies:**  
+  - `AmazonRDSFullAccess`  
+  - `AWSElasticBeanstalkWebTier`
+  - `AWSElasticBeanstalkMulticontainerDocker`
 
 > Attach these roles while creating Elastic Beanstalk environments.
 
@@ -273,31 +302,60 @@ zip -r ../frontend.zip Dockerfile default.conf env.sh build public src package*.
 - `package-lock.json`
 
 ---
-
 ## 🔧 Environment Variables
-### 🔐 Backend (Node.js)
 
-Set the following environment variables in **Elastic Beanstalk**, either via:
+Environment variables are critical for secure and flexible configuration. These should be set in your **Elastic Beanstalk environments** via:
 
-- `.ebextensions/` (e.g., `node.config`), or  
-- **EB Console** → **Configuration** → **Software** → **Environment Properties**
+- EB Console → **Configuration** → **Software** → **Environment Properties**
+- Or via `.ebextensions/*.config` files in your deployment bundles (optional)
 
-| Key         | Example Value                                     | Description                  |
-|-------------|---------------------------------------------------|------------------------------|
-| DB_HOST     | myappdb.dfghj75b.ap-south-1.rds.amazonaws.com     | RDS endpoint                 |
-| DB_NAME     | crud_app                                          | Database name                |
-| DB_USER     | admin                                             | DB username                  |
-| DB_PASSWORD | `<your-secure-password>`                          | DB password                  |
-| JWT_SECRET  | `<yourSecret>`                                    | Secret for JWT signing       |
-| NODE_ENV    | production                                        | Environment mode             |
+### 🔐 Backend (Node.js + Express)
 
-### 🌍 Frontend (React via Docker)
+| Key           | Example Value                                   | Description                                     |
+| ------------- | ----------------------------------------------- | ----------------------------------------------- |
+| `DB_HOST`     | `myappdb.abcdefgh.ap-south-1.rds.amazonaws.com` | MySQL RDS endpoint                              |
+| `DB_NAME`     | `crud_app`                                      | Database name                                   |
+| `DB_USER`     | `rahul`                                         | Database username                               |
+| `DB_PASSWORD` | `securepassword123!`                            | Database password                               |
+| `JWT_SECRET`  | `yourSuperSecretKey`                            | Secret key for signing JWTs                     |
+| `NODE_ENV`    | `production`                                    | Application mode (`development` / `production`) |
 
-Set the following environment variable in the **Elastic Beanstalk** environment properties for the **frontend**:
+> 💡 These are used directly in your Node.js app (`process.env`) and must be available at **runtime**.
+
+---
+
+### 🌍 Frontend (React + Docker + NGINX)
+
+React uses environment variables in **two ways**:
+
+#### 1. 🧪 Build-time Variables (Local / Development)
+
+Set in `.env` during local development:
 
 ```env
-REACT_APP_API_URL=http://myapp-backend-env.eba-xxxx.ap-south-1.elasticbeanstalk.com
+REACT_APP_API_URL=http://localhost:8080
 ```
+- These are embedded at build time and used by React scripts.
+
+#### 2. 🚀 Runtime Variables (Elastic Beanstalk Deployment)
+
+In production (Elastic Beanstalk), we inject runtime environment variables into the browser using a shell script (env.sh) that writes to window._env_.
+
+Required Environment Variable (set in EB frontend environment):
+
+| Key       | Example Value                                                       | Purpose                                     |
+| --------- | ------------------------------------------------------------------- | ------------------------------------------- |
+| `API_URL` | `http://myapp-backend-env.eba-xxxx.ap-south-1.elasticbeanstalk.com` | Used by frontend via `window._env_.API_URL` |
+
+- ✅ This allows frontend containers to pick the API URL at runtime without rebuilding the Docker image.
+
+---
+## 🧠 Summary: Environment Variable Injection
+| Purpose          | Used In        | Injection Time         | Prefix / Access Method                         |
+| ---------------- | -------------- | ---------------------- | ---------------------------------------------- |
+| Backend API vars | Node.js app    | Runtime                | Plain vars (e.g., `DB_HOST`) via `process.env` |
+| Frontend API URL | React (local)  | Build-time             | Must prefix with `REACT_APP_`                  |
+| Frontend API URL | React (Docker) | Runtime (via `env.sh`) | Exposed via `window._env_.API_URL`             |
 ---
 
 ## ✅ Final Checks
